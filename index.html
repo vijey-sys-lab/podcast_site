@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Podcast With Stories</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <link rel="alternate icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2307070a'/%3E%3Crect width='64' height='64' rx='10' fill='none' stroke='%23c9a84c' stroke-width='2'/%3E%3Crect x='30' y='6' width='4' height='4' rx='0.5' fill='%23c9a84c' transform='rotate(45 32 8)'/%3E%3Ctext x='32' y='38' font-family='Georgia,serif' font-size='18' font-weight='bold' fill='%23c9a84c' text-anchor='middle' letter-spacing='0.5'%3EPWS%3C/text%3E%3Cline x1='14' y1='46' x2='50' y2='46' stroke='%23c9a84c' stroke-width='1' stroke-opacity='0.5'/%3E%3Ccircle cx='32' cy='52' r='2' fill='%23c9a84c' opacity='0.7'/%3E%3C/svg%3E"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070a;
+      --surface: #0f0f14;
+      --gold: #c9a84c;
+      --gold-dim: #8a6e2f;
+      --gold-glow: rgba(201,168,76,0.15);
+      --cream: #f0ead8;
+      --muted: #6b6456;
+      --border: rgba(201,168,76,0.15);
+      --blue: #1a1a2e;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999; opacity: .5;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: rgba(7,7,10,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      letter-spacing: .12em;
+      color: var(--gold);
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-admin-btn {
+      padding: .5rem 1.2rem;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      border-radius: 2px;
+      cursor: pointer;
+      background: transparent;
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .nav-admin-btn:hover { background: var(--gold); color: var(--bg); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 8rem 2rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg-glow {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 900px; height: 900px;
+      background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem; letter-spacing: .3em;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      opacity: 0; animation: fadeUp .8s .1s ease forwards;
+    }
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4rem, 12vw, 9rem);
+      letter-spacing: .06em; line-height: .95;
+      color: var(--cream);
+      opacity: 0; animation: fadeUp .9s .2s ease forwards;
+    }
+    .hero-title .accent { color: var(--gold); }
+    .hero-sub {
+      margin-top: 1.5rem;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      font-weight: 300; color: var(--muted);
+      max-width: 500px; line-height: 1.75;
+      opacity: 0; animation: fadeUp .9s .35s ease forwards;
+    }
+    .ornament {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 2.5rem auto;
+      opacity: 0; animation: fadeUp .8s .45s ease forwards;
+    }
+    .ornament-line { flex: 1; max-width: 100px; height: 1px; background: var(--border); }
+    .ornament-diamond { width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); }
+
+    /* EPISODES GRID */
+    .episodes-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 2rem 6rem;
+      opacity: 0; animation: fadeUp 1s .5s ease forwards;
+    }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2.5rem;
+    }
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem; letter-spacing: .28em;
+      color: var(--gold); text-transform: uppercase;
+    }
+    .section-line { flex: 1; height: 1px; background: var(--border); margin-left: 1.5rem; }
+
+    /* Episode cards */
+    #episodes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .ep-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .25s, box-shadow .25s, border-color .25s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .ep-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--gold-dim);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,168,76,0.1);
+    }
+    .ep-thumb {
+      width: 100%; aspect-ratio: 16/9;
+      object-fit: cover;
+      background: var(--blue);
+      display: block;
+      position: relative;
+    }
+    .ep-thumb-placeholder {
+      width: 100%; aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem; letter-spacing: .1em;
+      color: var(--gold-dim);
+    }
+    .ep-body { padding: 1.3rem 1.5rem 1.5rem; }
+    .ep-num {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem; letter-spacing: .22em;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+    .ep-title {
+      font-size: 1.3rem; font-weight: 400; line-height: 1.25;
+      margin-bottom: .4rem;
+    }
+    .ep-speaker { font-size: .95rem; color: var(--muted); font-weight: 300; }
+    .ep-meta-row {
+      display: flex; gap: 1rem;
+      margin-top: 1rem; padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .ep-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: .57rem; letter-spacing: .15em;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .ep-badge strong { color: var(--cream); display: block; margin-top: .1rem; font-weight: 400; }
+    .ep-sponsored {
+      margin-left: auto;
+      font-family: 'DM Mono', monospace;
+      font-size: .57rem; letter-spacing: .12em;
+      color: var(--gold-dim); text-transform: uppercase;
+      align-self: flex-end;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem;
+      color: var(--muted); font-style: italic;
+      font-size: 1.1rem; grid-column: 1/-1;
+    }
+
+    /* MODAL / VIDEO PLAYER */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.9);
+      display: none; align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      max-width: 900px; width: 100%;
+      overflow: hidden;
+    }
+    .modal-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-ep-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem; letter-spacing: .2em;
+      color: var(--gold); text-transform: uppercase;
+    }
+    .modal-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 1.4rem; cursor: pointer; transition: color .2s;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--cream); }
+    .modal-video { width: 100%; aspect-ratio: 16/9; background: #000; display: block; }
+    .modal-info { padding: 1.5rem; }
+    .modal-title { font-size: 1.6rem; font-weight: 300; margin-bottom: .3rem; }
+    .modal-speaker { font-size: 1rem; color: var(--muted); }
+
+    /* FOOTER */
+    footer {
+      margin-top: 2rem;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+    footer p {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem; letter-spacing: .18em;
+      color: var(--muted); text-transform: uppercase;
+    }
+    footer .gd { color: var(--gold); }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.2rem; }
+      .nav-links { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">PWS</a>
+  <div class="nav-links">
+    <a href="#">Episodes</a>
+    <a href="#">About</a>
+    <a class="nav-admin-btn" href="admin.html">Admin ↗</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg-glow"></div>
+  <p class="hero-tag">Season 1 · Now Playing</p>
+  <h1 class="hero-title">Podcast<br><span class="accent">With Stories</span></h1>
+  <p class="hero-sub">Exclusive interviews. Inspiring conversations. Every episode crafted with intention.</p>
+  <div class="ornament">
+    <div class="ornament-line"></div>
+    <div class="ornament-diamond"></div>
+    <div class="ornament-line"></div>
+  </div>
+</section>
+
+<section class="episodes-section">
+  <div class="section-header">
+    <span class="section-label">All Episodes</span>
+    <div class="section-line"></div>
+  </div>
+  <div id="episodes-grid">
+    <div class="empty-state">Loading episodes…</div>
+  </div>
+</section>
+
+<!-- VIDEO MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-top">
+      <span class="modal-ep-label" id="modal-ep-num">Episode 01</span>
+      <button class="modal-close" id="modal-close-btn">✕</button>
+    </div>
+    <video class="modal-video" id="modal-video" controls></video>
+    <div class="modal-info">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-speaker" id="modal-speaker"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 <span class="gd">◆</span> Podcast With Stories <span class="gd">◆</span> All rights reserved</p>
+</footer>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA-wk7PG924-vazzmf5RpzCNzKlArLXdds",
+    authDomain: "poodcast-e02da.firebaseapp.com",
+    projectId: "poodcast-e02da",
+    storageBucket: "poodcast-e02da.firebasestorage.app",
+    messagingSenderId: "27280570286",
+    appId: "1:27280570286:web:41f1f21d621fae888e7a3f",
+    measurementId: "G-44CDLYF2P1"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  async function loadEpisodes() {
+    const grid = document.getElementById('episodes-grid');
+    try {
+      const q = query(collection(db, 'episodes'), orderBy('episodeNumber', 'asc'));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        grid.innerHTML = '<div class="empty-state">No episodes yet. Check back soon.</div>';
+        return;
+      }
+      grid.innerHTML = '';
+      snap.forEach(doc => {
+        const ep = doc.data();
+        const card = document.createElement('div');
+        card.className = 'ep-card';
+        card.innerHTML = `
+          ${ep.thumbnailUrl
+            ? `<img class="ep-thumb" src="${ep.thumbnailUrl}" alt="${ep.podcastName}" loading="lazy"/>`
+            : `<div class="ep-thumb-placeholder">Podcast With Stories · Ep ${ep.episodeNumber}</div>`
+          }
+          <div class="ep-body">
+            <div class="ep-num">Episode ${String(ep.episodeNumber).padStart(2,'0')} &nbsp;·&nbsp; ${ep.podcastName || 'Podcast With Stories'}</div>
+            <div class="ep-title">Ft. ${ep.speakerName}</div>
+            <div class="ep-speaker">${ep.topic || 'Exclusive Interview & Inspiring Conversations'}</div>
+            <div class="ep-meta-row">
+              <div class="ep-badge">Published<strong>${ep.publishedDate || '—'}</strong></div>
+              <div class="ep-badge">Format<strong>Video Podcast</strong></div>
+              ${ep.sponsoredBy ? `<div class="ep-sponsored">Sponsored by ${ep.sponsoredBy}</div>` : ''}
+            </div>
+          </div>
+        `;
+        card.addEventListener('click', () => openModal(ep));
+        grid.appendChild(card);
+      });
+    } catch(e) {
+      console.error(e);
+      grid.innerHTML = '<div class="empty-state">Failed to load episodes.</div>';
+    }
+  }
+
+  function openModal(ep) {
+    document.getElementById('modal-ep-num').textContent = `Episode ${String(ep.episodeNumber).padStart(2,'0')}`;
+    document.getElementById('modal-title').textContent = `Ft. ${ep.speakerName}`;
+    document.getElementById('modal-speaker').textContent = ep.topic || '';
+    const vid = document.getElementById('modal-video');
+    vid.src = ep.videoUrl;
+    vid.load();
+    document.getElementById('modal').classList.add('open');
+  }
+
+  document.getElementById('modal-close-btn').addEventListener('click', () => {
+    document.getElementById('modal').classList.remove('open');
+    const vid = document.getElementById('modal-video');
+    vid.pause(); vid.src = '';
+  });
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) {
+      document.getElementById('modal-close-btn').click();
+    }
+  });
+
+  loadEpisodes();
+</script>
+</body>
+</html>
